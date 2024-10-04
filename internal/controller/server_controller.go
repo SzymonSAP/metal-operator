@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ironcore-dev/metal-operator/bmc"
+	"github.com/ironcore-dev/metal-operator/internal/bmcutils"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/go-logr/logr"
@@ -394,7 +395,7 @@ func (r *ServerReconciler) updateServerStatus(ctx context.Context, log logr.Logg
 		log.V(1).Info("Server has no BMC connection configured")
 		return nil
 	}
-	bmcClient, err := GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
 	if err != nil {
 		return fmt.Errorf("failed to create BMC client: %w", err)
 	}
@@ -571,7 +572,7 @@ func (r *ServerReconciler) pxeBootServer(ctx context.Context, log logr.Logger, s
 		return fmt.Errorf("can only PXE boot server with valid BMC ref or inline BMC configuration")
 	}
 
-	bmcClient, err := GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
 	defer func() {
 		if bmcClient != nil {
 			bmcClient.Logout()
@@ -662,7 +663,7 @@ func (r *ServerReconciler) ensureServerPowerState(ctx context.Context, log logr.
 		return nil
 	}
 
-	bmcClient, err := GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
 	defer func() {
 		if bmcClient != nil {
 			bmcClient.Logout()
@@ -784,7 +785,7 @@ func (r *ServerReconciler) applyBootOrder(ctx context.Context, log logr.Logger, 
 		log.V(1).Info("Server has no BMC connection configured")
 		return nil
 	}
-	bmcClient, err := GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
 	if err != nil {
 		return fmt.Errorf("failed to create BMC client: %w", err)
 	}
@@ -818,7 +819,7 @@ func (r *ServerReconciler) handleAnnotionOperations(ctx context.Context, log log
 	if !ok {
 		return false, nil
 	}
-	bmcClient, err := GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientForServer(ctx, r.Client, server, r.Insecure)
 	if err != nil {
 		return false, fmt.Errorf("failed to create BMC client: %w", err)
 	}

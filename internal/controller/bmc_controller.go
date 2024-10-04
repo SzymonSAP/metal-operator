@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ironcore-dev/metal-operator/internal/bmcutils"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/go-logr/logr"
@@ -30,11 +31,11 @@ type BMCReconciler struct {
 	Insecure bool
 }
 
-//+kubebuilder:rbac:groups=metal.ironcore.dev,resources=endpoints,verbs=get;list;watch
-//+kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcsecrets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=metal.ironcore.dev,resources=endpoints,verbs=get;list;watch
+// +kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcsecrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=metal.ironcore.dev,resources=bmcs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -117,7 +118,7 @@ func (r *BMCReconciler) updateBMCStatusDetails(ctx context.Context, log logr.Log
 		return fmt.Errorf("failed to patch IP and MAC address status: %w", err)
 	}
 
-	bmcClient, err := GetBMCClientFromBMC(ctx, r.Client, bmcObj, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientFromBMC(ctx, r.Client, bmcObj, r.Insecure)
 	if err != nil {
 		return fmt.Errorf("failed to create BMC client: %w", err)
 	}
@@ -147,7 +148,7 @@ func (r *BMCReconciler) updateBMCStatusDetails(ctx context.Context, log logr.Log
 }
 
 func (r *BMCReconciler) discoverServers(ctx context.Context, log logr.Logger, bmcObj *metalv1alpha1.BMC) error {
-	bmcClient, err := GetBMCClientFromBMC(ctx, r.Client, bmcObj, r.Insecure)
+	bmcClient, err := bmcutils.GetBMCClientFromBMC(ctx, r.Client, bmcObj, r.Insecure)
 	if err != nil {
 		return fmt.Errorf("failed to create BMC client: %w", err)
 	}
@@ -164,7 +165,7 @@ func (r *BMCReconciler) discoverServers(ctx context.Context, log logr.Logger, bm
 				Kind:       "Server",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: GetServerNameFromBMCandIndex(i, bmcObj),
+				Name: bmcutils.GetServerNameFromBMCandIndex(i, bmcObj),
 			},
 			Spec: metalv1alpha1.ServerSpec{
 				UUID:   strings.ToLower(s.UUID), // always use lower-case uuids
