@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ironcore-dev/metal-operator/internal/executor"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -28,7 +29,7 @@ import (
 	"github.com/ironcore-dev/metal-operator/internal/api/macdb"
 	"github.com/ironcore-dev/metal-operator/internal/controller"
 	"github.com/ironcore-dev/metal-operator/internal/registry"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -39,7 +40,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(metalv1alpha1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
@@ -241,6 +242,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ServerClaim")
 		os.Exit(1)
 	}
+	if err = (&controller.ServerBIOSReconciler{
+		Client:       mgr.GetClient(),
+		Scheme:       mgr.GetScheme(),
+		TaskExecutor: executor.New(mgr.GetClient(), insecure),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ServerBIOS")
+		os.Exit(1)
+	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&metalv1alpha1.ServerClaim{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ServerClaim")
@@ -253,7 +262,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	//+kubebuilder:scaffold:builder
+	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")

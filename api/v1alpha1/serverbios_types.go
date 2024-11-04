@@ -47,10 +47,6 @@ type ServerBIOSStatus struct {
 	// BIOS contains a bios version and settings.
 	// +optional
 	BIOS BIOSSettings `json:"bios,omitempty"`
-
-	// RunningJob reflects the invoked scan or update job running
-	// +optional
-	RunningJob RunningJobRef `json:"runningJob,omitempty"`
 }
 
 // +kubebuilder:object:root=true
